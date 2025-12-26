@@ -1,0 +1,61 @@
+# HTTPRoute for MaaS Gateway
+# Update backendRefs to match your model's service
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: maas-model-route
+  namespace: my-first-model  # Change to your model's namespace
+  annotations:
+    opendatahub.io/managed: "false"
+spec:
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: maas-gateway
+      namespace: openshift-ingress
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /my-first-model/qwen3-0-6b/v1/chat/completions
+      filters:
+        - type: URLRewrite
+          urlRewrite:
+            path:
+              type: ReplacePrefixMatch
+              replacePrefixMatch: /v1/chat/completions
+      backendRefs:
+        - group: inference.networking.x-k8s.io
+          kind: InferencePool
+          name: qwen3-0-6b-inference-pool  # Change to your model's pool
+          port: 8000
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /my-first-model/qwen3-0-6b/v1/completions
+      filters:
+        - type: URLRewrite
+          urlRewrite:
+            path:
+              type: ReplacePrefixMatch
+              replacePrefixMatch: /v1/completions
+      backendRefs:
+        - group: inference.networking.x-k8s.io
+          kind: InferencePool
+          name: qwen3-0-6b-inference-pool
+          port: 8000
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /my-first-model/qwen3-0-6b
+      filters:
+        - type: URLRewrite
+          urlRewrite:
+            path:
+              type: ReplacePrefixMatch
+              replacePrefixMatch: /
+      backendRefs:
+        - kind: Service
+          name: qwen3-0-6b-kserve-workload-svc
+          port: 8000
+

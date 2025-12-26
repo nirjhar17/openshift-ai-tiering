@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tier-to-group-mapping
+  namespace: maas-api
+  labels:
+    app: maas-api
+  annotations:
+    opendatahub.io/managed: "false"
+data:
+  tiers: |
+    - name: enterprise
+      displayName: Enterprise Tier
+      level: 2
+      groups:
+        - system:serviceaccounts:tier-enterprise
+
+    - name: premium
+      displayName: Premium Tier
+      level: 1
+      groups:
+        - system:serviceaccounts:tier-premium
+
+    - name: free
+      displayName: Free Tier
+      level: 0
+      groups:
+        - system:serviceaccounts:tier-free
+        - system:authenticated
+

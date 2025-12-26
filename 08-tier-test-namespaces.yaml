@@ -1,0 +1,89 @@
+# Test namespaces for each tier
+# Token review returns: system:serviceaccounts:<namespace>
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tier-free
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: test-user
+  namespace: tier-free
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tier-premium
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: test-user
+  namespace: tier-premium
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: tier-enterprise
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: test-user
+  namespace: tier-enterprise
+---
+# RBAC for model access
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: llmis-access
+  namespace: my-first-model  # Change to your model's namespace
+rules:
+  - apiGroups: ["serving.kserve.io"]
+    resources: ["llminferenceservices"]
+    verbs: ["get", "list", "post"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: tier-free-access
+  namespace: my-first-model
+subjects:
+  - kind: ServiceAccount
+    name: test-user
+    namespace: tier-free
+roleRef:
+  kind: Role
+  name: llmis-access
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: tier-premium-access
+  namespace: my-first-model
+subjects:
+  - kind: ServiceAccount
+    name: test-user
+    namespace: tier-premium
+roleRef:
+  kind: Role
+  name: llmis-access
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: tier-enterprise-access
+  namespace: my-first-model
+subjects:
+  - kind: ServiceAccount
+    name: test-user
+    namespace: tier-enterprise
+roleRef:
+  kind: Role
+  name: llmis-access
+  apiGroup: rbac.authorization.k8s.io
+

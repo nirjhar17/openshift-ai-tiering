@@ -1,0 +1,31 @@
+# MaaS Gateway - NOT managed by ODH
+# The annotation opendatahub.io/managed: "false" prevents ODH from creating policies
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: maas-gateway
+  namespace: openshift-ingress
+  annotations:
+    opendatahub.io/managed: "false"
+  labels:
+    opendatahub.io/managed: "false"
+spec:
+  gatewayClassName: openshift-ai-inference  # Use same class as existing Gateway
+  listeners:
+    - name: http
+      port: 80
+      protocol: HTTP
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: https
+      port: 443
+      protocol: HTTPS
+      allowedRoutes:
+        namespaces:
+          from: All
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - name: maas-gateway-tls
+
