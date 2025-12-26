@@ -54,17 +54,19 @@ User Request (with Bearer Token)
 
 ## How the Components Talk to Each Other
 
-**Gateway** — The entry point. All requests come here first. We use `opendatahub.io/managed: "false"` annotation to tell ODH: "Don't create any policies for this gateway."
+Let me explain this simply.
 
-**WasmPlugin** — Auto-created by Kuadrant when you create AuthPolicy/RateLimitPolicy. It intercepts requests and calls Authorino and Limitador. You never create this manually.
+When a user sends a request, it first hits the **Gateway**. The Gateway is just the front door — all traffic enters here. We create a separate Gateway with a special annotation `opendatahub.io/managed: "false"` which tells ODH "don't touch this, I'll manage it myself."
 
-**Authorino** — The authentication service in `kuadrant-system` namespace. It validates the token, calls MaaS API to get the tier, and checks RBAC permissions.
+Now, when you create an AuthPolicy or RateLimitPolicy, Kuadrant automatically creates something called a **WasmPlugin**. You never create this yourself. The WasmPlugin sits inside the Gateway and intercepts every request before it goes to your model.
 
-**MaaS API** — A simple Go app we deploy. It reads a ConfigMap and translates user groups into tier names (e.g., "premium").
+The WasmPlugin calls **Authorino** first. Authorino is the authentication service running inside the cluster. Authorino takes the user's token and validates it with Kubernetes. Then Authorino calls the **MaaS API** to find out what tier this user belongs to. MaaS API is just a simple Go application we deploy — it reads a ConfigMap and answers "this user is premium tier" or "this user is free tier."
 
-**Limitador** — The rate limiting service. It receives the tier from Authorino and checks: "Is this premium user under 20 requests?" If yes, allow. If no, return 429.
+Once Authorino knows the tier, it passes this information to **Limitador**. Limitador is the rate limiting service. It checks "okay, this is a premium user, have they made more than 20 requests in the last 2 minutes?" If under the limit, the request is allowed. If over the limit, Limitador returns 429 Too Many Requests.
 
-**HTTPRoute** — Routes the request to your model backend after all checks pass.
+If everything passes, the **HTTPRoute** finally sends the request to your model backend. The model processes it and returns the response.
+
+That's it. Gateway receives the request, WasmPlugin intercepts it, Authorino authenticates and gets the tier, Limitador enforces the rate limit, and HTTPRoute routes to the model.
 
 ## The Key Insight: `opendatahub.io/managed: "false"`
 
