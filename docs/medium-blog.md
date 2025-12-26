@@ -52,6 +52,20 @@ User Request (with Bearer Token)
 └───────────────────────────────────────────┘
 ```
 
+## How the Components Talk to Each Other
+
+**Gateway** — The entry point. All requests come here first. We use `opendatahub.io/managed: "false"` annotation to tell ODH: "Don't create any policies for this gateway."
+
+**WasmPlugin** — Auto-created by Kuadrant when you create AuthPolicy/RateLimitPolicy. It intercepts requests and calls Authorino and Limitador. You never create this manually.
+
+**Authorino** — The authentication service in `kuadrant-system` namespace. It validates the token, calls MaaS API to get the tier, and checks RBAC permissions.
+
+**MaaS API** — A simple Go app we deploy. It reads a ConfigMap and translates user groups into tier names (e.g., "premium").
+
+**Limitador** — The rate limiting service. It receives the tier from Authorino and checks: "Is this premium user under 20 requests?" If yes, allow. If no, return 429.
+
+**HTTPRoute** — Routes the request to your model backend after all checks pass.
+
 ## The Key Insight: `opendatahub.io/managed: "false"`
 
 The secret to making this work cleanly is creating a **separate Gateway** with the annotation:
