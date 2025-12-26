@@ -218,6 +218,39 @@ spec:
         - expression: auth.identity.userid
 ```
 
+## How to Test Without Creating Real User Groups
+
+Here's the trick. When Kubernetes validates a ServiceAccount token, it returns groups based on the namespace:
+- ServiceAccount in `tier-free` namespace → gets group `system:serviceaccounts:tier-free`
+- ServiceAccount in `tier-premium` namespace → gets group `system:serviceaccounts:tier-premium`
+- ServiceAccount in `tier-enterprise` namespace → gets group `system:serviceaccounts:tier-enterprise`
+
+So we don't need to create real user groups. We just create three namespaces and a `test-user` ServiceAccount in each:
+
+```bash
+# Create test namespaces
+oc create namespace tier-free
+oc create namespace tier-premium
+oc create namespace tier-enterprise
+
+# Create test-user in each
+oc create serviceaccount test-user -n tier-free
+oc create serviceaccount test-user -n tier-premium
+oc create serviceaccount test-user -n tier-enterprise
+```
+
+Our ConfigMap maps these namespace groups to tiers:
+```yaml
+- name: free
+  groups:
+    - system:serviceaccounts:tier-free
+- name: premium
+  groups:
+    - system:serviceaccounts:tier-premium
+```
+
+Now when we generate a token from a specific namespace, MaaS API sees the group and returns the correct tier.
+
 ## Testing
 
 Generate a token for FREE tier:
