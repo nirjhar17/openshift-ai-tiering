@@ -126,6 +126,8 @@ oc rollout status deployment/maas-api -n maas-api --timeout=120s
 
 ### Step 4: Create TLS Certificate
 
+> **Note:** This creates a self-signed certificate for testing/demo purposes. In production, use a real certificate from Let's Encrypt, your company CA, or a certificate manager.
+
 ```bash
 openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
   -keyout /tmp/tls.key -out /tmp/tls.crt \
