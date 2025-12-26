@@ -27,5 +27,5 @@ spec:
       tls:
         mode: Terminate
         certificateRefs:
-          - name: maas-gateway-tls
+          - name: default-gateway-tls
 
