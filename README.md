@@ -124,9 +124,21 @@ oc apply -f 03-maas-api-deployment.yaml
 oc rollout status deployment/maas-api -n maas-api --timeout=120s
 ```
 
-### Step 4: Create MaaS Gateway
+### Step 4: Create TLS Certificate
 
-Note: This Gateway reuses the existing `default-gateway-tls` certificate.
+```bash
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+  -keyout /tmp/tls.key -out /tmp/tls.crt \
+  -subj "/CN=maas-gateway"
+
+oc create secret tls maas-gateway-tls \
+  --cert=/tmp/tls.crt --key=/tmp/tls.key \
+  -n openshift-ingress
+
+rm /tmp/tls.key /tmp/tls.crt
+```
+
+### Step 5: Create MaaS Gateway
 
 ```bash
 oc apply -f 04-maas-gateway.yaml
@@ -138,25 +150,25 @@ Wait for Gateway:
 oc get gateway maas-gateway -n openshift-ingress -w
 ```
 
-### Step 5: Create HTTPRoute
+### Step 6: Create HTTPRoute
 
 ```bash
 oc apply -f 05-maas-httproute.yaml
 ```
 
-### Step 6: Create AuthPolicy
+### Step 7: Create AuthPolicy
 
 ```bash
 oc apply -f 06-auth-policy.yaml
 ```
 
-### Step 7: Create RateLimitPolicy
+### Step 8: Create RateLimitPolicy
 
 ```bash
 oc apply -f 07-rate-limit-policy.yaml
 ```
 
-### Step 8: Create Test Users
+### Step 9: Create Test Users
 
 ```bash
 oc apply -f 08-tier-test-namespaces.yaml
